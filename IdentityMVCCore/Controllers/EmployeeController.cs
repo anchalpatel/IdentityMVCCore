@@ -1,7 +1,9 @@
 ﻿using IdentityMVCCore.EditModel;
 using IdentityMVCCore.Models;
+using IdentityMVCCore.Security;
 using IdentityMVCCore.ViewModel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,14 @@ namespace IdentityMVCCore.Controllers
     [Authorize]
     public class EmployeeController : Controller
     {
+        private readonly IDataProtector protector;
+        private readonly ILogger<EmployeeController> logger;
+
+        public EmployeeController(IDataProtectionProvider protectionProvider, DataProtectorPurposeString purposeString, ILogger<EmployeeController> logger)
+        {
+            this.protector = protectionProvider.CreateProtector(purposeString.EmployeeIdRoutueValue);
+            this.logger = logger;
+        }
         [HttpGet]
         
         public IActionResult Create()
@@ -44,15 +54,20 @@ namespace IdentityMVCCore.Controllers
             using(EmployeeContext context = new EmployeeContext())
             {
                 List<Employee> employee = context.Employees.ToList();
+                foreach(Employee emp in employee)
+                {
+                    emp.EncryptedId = protector.Protect(emp.Id.ToString());
+                }
                 return View(employee);
             }
         }
         [HttpGet]
-        public IActionResult Details(int id)
+        public IActionResult Details(string id)
         {
+             int decryptedId = Convert.ToInt32(protector.Unprotect(id));
             using(EmployeeContext context = new EmployeeContext())
             {
-                var employee = context.Employees.Where(emp => emp.Id == id).FirstOrDefault();
+                var employee = context.Employees.Where(emp => emp.Id == decryptedId).FirstOrDefault();
                 return View(employee);
             }
         }
@@ -91,17 +106,19 @@ namespace IdentityMVCCore.Controllers
                 
             }
             ModelState.AddModelError("", "Error occured while updating employee");
-            return View(model);
+            return View(model); 
         }
         [HttpGet]
         public IActionResult Delete(int id)
         {
             using(EmployeeContext context = new EmployeeContext())
             {
+               
                 var employee = (Employee)context.Employees.FirstOrDefault(emp=>emp.Id.Equals(id));
                 if(employee == null)
                 {
-                    return NotFound();
+                    ViewBag.ErrorMessage = "Employee with id : " + id + " not found";
+                    return View("Error");
                 }
                 return View(employee);
             }

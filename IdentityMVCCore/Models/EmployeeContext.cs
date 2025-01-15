@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace IdentityMVCCore.Models;
 
@@ -50,6 +51,10 @@ public partial class EmployeeContext : IdentityDbContext<ApplicationUser>
         });
 
         OnModelCreatingPartial(modelBuilder);
+        foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+        {
+            foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

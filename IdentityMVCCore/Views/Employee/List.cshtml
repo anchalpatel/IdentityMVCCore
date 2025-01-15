@@ -15,7 +15,7 @@
     {
         <div class="col-md-4">
             <!-- Wrap the entire card in the anchor tag for the card to be clickable -->
-            <a asp-route-id="@item.Id" asp-action="Details" asp-controller="Employee" class="card-link text-decoration-none">
+            <a asp-route-id="@item.EncryptedId" asp-action="Details" asp-controller="Employee" class="card-link text-decoration-none">
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title" style="color: inherit;">@item.Firstname @item.Lastname</h5>
